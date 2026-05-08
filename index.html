@@ -365,6 +365,34 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
 </div>
 
 <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCyPdVba3IKjs7hJlxEm_pxg6gsuhkmnOU",
+  authDomain: "apeflex-tracker.firebaseapp.com",
+  projectId: "apeflex-tracker",
+  storageBucket: "apeflex-tracker.firebasestorage.app",
+  messagingSenderId: "212749223686",
+  appId: "1:212749223686:web:a86256f9136086f11b8087"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const COLL = 'blocks';
+
+// Expose Firebase functions to global scope so regular script can use them
+window._fbSetDoc = (id, data) => setDoc(doc(db, COLL, String(id)), data);
+window._fbDeleteDoc = (id) => deleteDoc(doc(db, COLL, String(id)));
+window._fbGetDocs = () => getDocs(collection(db, COLL));
+window._fbOnSnapshot = (cb) => onSnapshot(collection(db, COLL), cb);
+window._fbReady = true;
+
+// Trigger init after Firebase is ready
+document.dispatchEvent(new Event('firebase-ready'));
+</script>
+
+<script>
 const SEED = [
   [1,"VGA1","Miércoles","Apr 29 6:52 PM","7:15 PM",3,90,23,"Tarde","Screenshot"],
   [2,"VGA1","Jueves","Apr 30 5:06 PM","6:00 PM",3,90,54,"Tarde","routes4u"],
@@ -419,47 +447,21 @@ const SEED = [
   [51,"VTL2","Viernes","May 8 10:31 AM","11:00 AM",5,180,29,"Mañana","Screenshot"],
 ];
 
-// --- FIREBASE CONFIG ---
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+// --- FIREBASE WRAPPERS ---
+async function saveBlock(b) { await window._fbSetDoc(b.id, b); }
+async function removeBlock(id) { await window._fbDeleteDoc(id); }
+function saveBlocks() {}
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCyPdVba3IKjs7hJlxEm_pxg6gsuhkmnOU",
-  authDomain: "apeflex-tracker.firebaseapp.com",
-  projectId: "apeflex-tracker",
-  storageBucket: "apeflex-tracker.firebasestorage.app",
-  messagingSenderId: "212749223686",
-  appId: "1:212749223686:web:a86256f9136086f11b8087"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const COLL = 'blocks';
-
-let blocks = [];
-let nextId = 1;
-let dbReady = false;
-
-async function saveBlock(b) {
-  await setDoc(doc(db, COLL, String(b.id)), b);
-}
-async function removeBlock(id) {
-  await deleteDoc(doc(db, COLL, String(id)));
-}
-function saveBlocks() {} // no-op, writes go directly via saveBlock/removeBlock
-
-// Seed Firestore if empty
 async function seedIfEmpty() {
-  const snap = await getDocs(collection(db, COLL));
+  const snap = await window._fbGetDocs();
   if (snap.empty) {
     const seedData = SEED.map(r => ({id:r[0],warehouse:r[1],dia:r[2],grabbedAt:r[3],blockStart:r[4],duracion:r[5],pago:r[6],lead:r[7],franja:r[8],fuente:r[9]}));
-    for (const b of seedData) await setDoc(doc(db, COLL, String(b.id)), b);
+    for (const b of seedData) await saveBlock(b);
   }
 }
 
-// Real-time listener — updates UI on any device instantly
 function startSync() {
-  onSnapshot(collection(db, COLL), snap => {
+  window._fbOnSnapshot(snap => {
     blocks = snap.docs.map(d => d.data()).sort((a,b) => a.id - b.id);
     nextId = blocks.length ? Math.max(...blocks.map(b=>b.id)) + 1 : 1;
     updateNav();
@@ -470,9 +472,10 @@ function startSync() {
   });
 }
 
-// Show loading state
-document.getElementById('nav-sub').textContent = 'Conectando...';
-seedIfEmpty().then(() => { startSync(); dbReady = true; });
+document.addEventListener('firebase-ready', () => {
+  document.getElementById('nav-sub').textContent = 'Conectando...';
+  seedIfEmpty().then(() => startSync());
+});
 let sortCol = 'id', page = 1, PER = 20;
 let filterWH = '', filterFranja = '';
 
