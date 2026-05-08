@@ -298,7 +298,13 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   </div>
 
   <div style="margin-top:16px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius)">
-    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Zona peligrosa</div>
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Backup de datos</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <button class="btn btn-secondary" style="font-size:12px" onclick="exportData()">Exportar JSON</button>
+      <button class="btn btn-secondary" style="font-size:12px" onclick="document.getElementById('import-input').click()">Importar JSON</button>
+    </div>
+    <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;margin-top:4px">Zona peligrosa</div>
     <button class="btn btn-secondary" style="width:100%;color:var(--red);border-color:rgba(248,113,113,.3)" onclick="confirmReset()">Borrar todos los datos</button>
   </div>
 </div>
@@ -649,9 +655,36 @@ function confirmReset() {
     if (confirm('¿Seguro? Se perderán todos los bloques.')) {
       localStorage.removeItem(LS_KEY);
       blocks = loadBlocks(); nextId = Math.max(...blocks.map(b=>b.id))+1;
-      saveBlocks(); updateNav(); showToast('Datos reiniciados');
+      saveBlocks(); updateNav(); showToast('Datos reiniciados'); renderHome();
     }
   }
+}
+function exportData() {
+  const json = JSON.stringify(blocks, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `flex_backup_${date}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Backup exportado');
+}
+function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!Array.isArray(imported) || !imported[0]?.warehouse) { alert('Archivo inválido'); return; }
+      if (!confirm(`Importar ${imported.length} bloques? Reemplazará los datos actuales.`)) return;
+      blocks = imported;
+      nextId = Math.max(...blocks.map(b=>b.id), 0) + 1;
+      saveBlocks(); updateNav(); renderHome();
+      showToast(`${imported.length} bloques importados`);
+    } catch { alert('Error leyendo el archivo JSON'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
 }
 function calcLead() {
   const g = parseTime(document.getElementById('calc-g').value);
@@ -725,17 +758,33 @@ function renderHeatmap() {
   html+='</tbody></table>';
   document.getElementById('heatmap').innerHTML = html;
 
-  const insightData = [
-    ['Viernes','Madrugada VTL2 ($191.50 + $138) + VGA1 $122.50 a las 4:16 AM. Mañana muy activa. Día más premium registrado.'],
-    ['Lunes','VTL2 $160/5hrs a las 10 AM. VGA1 tarde 5:30–7:15 PM muy concurrido. 8 bloques totales.'],
-    ['Jueves','VTL2 $180 mañana (4 min lead!) + $195 tarde (8 min). Día premium VTL2.'],
-    ['Miércoles','DGT2 mañana 6:35 AM. Tarde 5–7 PM activa múltiples WH.'],
-    ['Sábado','VTL2 madrugada $162. VGA1 tarde 7:15 PM constante.'],
-    ['Domingo','VGA1 madrugada $136–154 con lead largo. VTL2 $215 con solo 8 min!'],
-    ['Martes','VGA1 tarde 5:45–7:15 PM. DGT2 activo. Día tranquilo.'],
-  ];
-  document.getElementById('insights').innerHTML = insightData.map(([d,t])=>`
-    <div class="insight"><div class="insight-day">${d}</div><div class="insight-text">${t}</div></div>`).join('');
+  // AUTO INSIGHTS — 100% calculated from data
+  const valid2 = blocks.filter(b=>b.franja!=='OUTLIER');
+  const insightHTML = dias.map(dia => {
+    const db = valid2.filter(b=>b.dia===dia);
+    if (!db.length) return '';
+    const pays = db.map(b=>b.pago);
+    const hrs3 = db.filter(b=>b.duracion).map(b=>b.pago/b.duracion);
+    const leads3 = db.filter(b=>b.lead!=null&&b.lead>=0).map(b=>b.lead);
+    const whs = [...new Set(db.map(b=>b.warehouse))];
+    const franjas3 = {};
+    db.forEach(b=>franjas3[b.franja]=(franjas3[b.franja]||0)+1);
+    const topFranja = Object.entries(franjas3).sort((a,b)=>b[1]-a[1])[0];
+    const bestBlock = db.filter(b=>b.duracion).sort((a,b)=>(b.pago/b.duracion)-(a.pago/a.duracion))[0];
+    const minLead = leads3.length ? Math.min(...leads3) : null;
+    const avgHrDia = hrs3.length ? (hrs3.reduce((a,b)=>a+b,0)/hrs3.length) : 0;
+
+    const lines = [];
+    lines.push(`${db.length} bloque${db.length>1?'s':''} registrado${db.length>1?'s':''}. WH: ${whs.join(', ')}.`);
+    lines.push(`Pago prom $${Math.round(pays.reduce((a,b)=>a+b,0)/pays.length)} · $/hr prom $${avgHrDia.toFixed(2)}.`);
+    if (bestBlock) lines.push(`Mejor bloque: ${bestBlock.warehouse} $${bestBlock.pago}/${bestBlock.duracion}hrs ($${(bestBlock.pago/bestBlock.duracion).toFixed(2)}/hr) a las ${bestBlock.blockStart}.`);
+    if (topFranja) lines.push(`Franja más activa: ${topFranja[0]} (${topFranja[1]} bloques).`);
+    if (minLead !== null) lines.push(`Lead mínimo registrado: ${minLead} min${minLead<=10?' ⚡':''}.`);
+    if (leads3.length) lines.push(`Lead promedio: ${Math.round(leads3.reduce((a,b)=>a+b,0)/leads3.length)} min.`);
+
+    return `<div class="insight"><div class="insight-day">${dia}</div><div class="insight-text">${lines.join(' ')}</div></div>`;
+  }).filter(Boolean).join('');
+  document.getElementById('insights').innerHTML = insightHTML || '<div class="empty">Sin datos suficientes</div>';
 }
 
 // --- INIT ---
