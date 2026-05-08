@@ -381,14 +381,11 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const COLL = 'blocks';
 
-// Expose Firebase functions to global scope so regular script can use them
 window._fbSetDoc = (id, data) => setDoc(doc(db, COLL, String(id)), data);
 window._fbDeleteDoc = (id) => deleteDoc(doc(db, COLL, String(id)));
 window._fbGetDocs = () => getDocs(collection(db, COLL));
 window._fbOnSnapshot = (cb) => onSnapshot(collection(db, COLL), cb);
 window._fbReady = true;
-
-// Trigger init after Firebase is ready
 document.dispatchEvent(new Event('firebase-ready'));
 </script>
 
@@ -471,11 +468,6 @@ function startSync() {
     if (document.getElementById('panel-heat').classList.contains('active')) renderHeatmap();
   });
 }
-
-document.addEventListener('firebase-ready', () => {
-  document.getElementById('nav-sub').textContent = 'Conectando...';
-  seedIfEmpty().then(() => startSync());
-});
 let sortCol = 'id', page = 1, PER = 20;
 let filterWH = '', filterFranja = '';
 
@@ -875,6 +867,11 @@ window.renderBlocks = renderBlocks;
 
 // --- INIT ---
 updateNav();
+
+document.addEventListener('firebase-ready', () => {
+  document.getElementById('nav-sub').textContent = 'Conectando...';
+  seedIfEmpty().then(() => startSync());
+});
 </script>
 </body>
 </html>
