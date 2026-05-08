@@ -275,8 +275,20 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
         </select>
       </div>
     </div>
+    <div style="margin-top:12px;padding:12px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border2)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:500">Repeticiones <span style="color:var(--muted2)">(mismo bloque visto por N personas)</span></span>
+        <span id="rep-display" style="font-family:var(--mono);font-size:16px;font-weight:500;color:var(--accent)">×1</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button type="button" onclick="changeRep(-1)" style="width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">−</button>
+        <input type="range" id="in-rep" min="1" max="6" value="1" step="1" oninput="updateRep()" style="flex:1;height:4px;accent-color:var(--accent)">
+        <button type="button" onclick="changeRep(1)" style="width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">+</button>
+      </div>
+      <div id="rep-hint" style="font-size:11px;color:var(--muted);margin-top:6px">Se creará 1 registro.</div>
+    </div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="addBlock()">+ Agregar</button>
+      <button class="btn btn-primary" onclick="addBlock()" id="add-btn">+ Agregar</button>
       <button class="btn btn-secondary" onclick="clearForm()">Limpiar</button>
     </div>
   </div>
@@ -616,6 +628,17 @@ function autoCalcForm() {
     document.getElementById('in-lead').style.color = lead < 0 ? 'var(--red)' : 'var(--accent)';
   }
 }
+function updateRep() {
+  const v = parseInt(document.getElementById('in-rep').value);
+  document.getElementById('rep-display').textContent = `×${v}`;
+  document.getElementById('rep-hint').textContent = v === 1 ? 'Se creará 1 registro.' : `Se crearán ${v} registros idénticos.`;
+  document.getElementById('add-btn').textContent = v === 1 ? '+ Agregar' : `+ Agregar ×${v}`;
+}
+function changeRep(delta) {
+  const el = document.getElementById('in-rep');
+  el.value = Math.min(6, Math.max(1, parseInt(el.value) + delta));
+  updateRep();
+}
 function addBlock() {
   const wh = document.getElementById('in-wh').value;
   const dia = document.getElementById('in-dia').value;
@@ -628,13 +651,14 @@ function addBlock() {
   const lead = leadVal !== '' ? parseInt(leadVal) : null;
   const franja = document.getElementById('in-franja').value || 'Tarde';
   const fuente = document.getElementById('in-fuente').value;
+  const reps = parseInt(document.getElementById('in-rep').value) || 1;
   if (!wh || !start || isNaN(dur) || isNaN(pago)) { alert('Completa: warehouse, block start, duración y pago.'); return; }
   const grabbedAt = fecha && grabbed ? `${fecha} ${grabbed}` : (grabbed || 'Desconocida');
-  blocks.push({id:nextId++, warehouse:wh, dia, grabbedAt, blockStart:start, duracion:dur, pago, lead, franja, fuente});
-  saveBlocks();
-  updateNav();
-  clearForm();
-  showToast('✓ Bloque #' + (nextId-1) + ' agregado');
+  for (let i = 0; i < reps; i++) {
+    blocks.push({id:nextId++, warehouse:wh, dia, grabbedAt, blockStart:start, duracion:dur, pago, lead, franja, fuente});
+  }
+  saveBlocks(); updateNav(); clearForm();
+  showToast(reps === 1 ? `✓ Bloque #${nextId-1} agregado` : `✓ ${reps} bloques agregados`);
 }
 function clearForm() {
   ['in-fecha','in-grabbed','in-start','in-dur','in-pago','in-lead'].forEach(id => document.getElementById(id).value = '');
@@ -642,6 +666,8 @@ function clearForm() {
   document.getElementById('in-franja-display').textContent = '—';
   document.getElementById('in-franja-display').style.color = 'var(--muted)';
   document.getElementById('in-lead').style.color = 'var(--accent)';
+  document.getElementById('in-rep').value = 1;
+  updateRep();
 }
 function deleteBlock(id) {
   if (!confirm(`¿Eliminar bloque #${id}?`)) return;
