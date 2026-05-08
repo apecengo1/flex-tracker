@@ -444,6 +444,12 @@ const SEED = [
   [51,"VTL2","Viernes","May 8 10:31 AM","11:00 AM",5,180,29,"Mañana","Screenshot"],
 ];
 
+// --- GLOBAL STATE (must be first) ---
+let blocks = [];
+let nextId = 1;
+let sortCol = 'id', page = 1, PER = 20;
+let filterWH = '', filterFranja = '';
+
 // --- FIREBASE WRAPPERS ---
 async function saveBlock(b) { await window._fbSetDoc(b.id, b); }
 async function removeBlock(id) { await window._fbDeleteDoc(id); }
@@ -468,10 +474,6 @@ function startSync() {
     if (document.getElementById('panel-heat').classList.contains('active')) renderHeatmap();
   });
 }
-let blocks = [];
-let nextId = 1;
-let sortCol = 'id', page = 1, PER = 20;
-let filterWH = '', filterFranja = '';
 
 // --- UTILS ---
 function hr(b) { return b.duracion && b.pago ? b.pago / b.duracion : null; }
