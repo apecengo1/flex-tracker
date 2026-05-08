@@ -364,7 +364,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   </button>
 </div>
 
-<script>
+<script type="module">
 const SEED = [
   [1,"VGA1","Miércoles","Apr 29 6:52 PM","7:15 PM",3,90,23,"Tarde","Screenshot"],
   [2,"VGA1","Jueves","Apr 30 5:06 PM","6:00 PM",3,90,54,"Tarde","routes4u"],
@@ -419,16 +419,60 @@ const SEED = [
   [51,"VTL2","Viernes","May 8 10:31 AM","11:00 AM",5,180,29,"Mañana","Screenshot"],
 ];
 
-const LS_KEY = 'flex_tracker_v3_data';
-function loadBlocks() {
-  const saved = localStorage.getItem(LS_KEY);
-  if (saved) return JSON.parse(saved);
-  return SEED.map(r => ({id:r[0],warehouse:r[1],dia:r[2],grabbedAt:r[3],blockStart:r[4],duracion:r[5],pago:r[6],lead:r[7],franja:r[8],fuente:r[9]}));
-}
-function saveBlocks() { localStorage.setItem(LS_KEY, JSON.stringify(blocks)); }
+// --- FIREBASE CONFIG ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-let blocks = loadBlocks();
-let nextId = Math.max(...blocks.map(b=>b.id), 0) + 1;
+const firebaseConfig = {
+  apiKey: "AIzaSyCyPdVba3IKjs7hJlxEm_pxg6gsuhkmnOU",
+  authDomain: "apeflex-tracker.firebaseapp.com",
+  projectId: "apeflex-tracker",
+  storageBucket: "apeflex-tracker.firebasestorage.app",
+  messagingSenderId: "212749223686",
+  appId: "1:212749223686:web:a86256f9136086f11b8087"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const COLL = 'blocks';
+
+let blocks = [];
+let nextId = 1;
+let dbReady = false;
+
+async function saveBlock(b) {
+  await setDoc(doc(db, COLL, String(b.id)), b);
+}
+async function removeBlock(id) {
+  await deleteDoc(doc(db, COLL, String(id)));
+}
+function saveBlocks() {} // no-op, writes go directly via saveBlock/removeBlock
+
+// Seed Firestore if empty
+async function seedIfEmpty() {
+  const snap = await getDocs(collection(db, COLL));
+  if (snap.empty) {
+    const seedData = SEED.map(r => ({id:r[0],warehouse:r[1],dia:r[2],grabbedAt:r[3],blockStart:r[4],duracion:r[5],pago:r[6],lead:r[7],franja:r[8],fuente:r[9]}));
+    for (const b of seedData) await setDoc(doc(db, COLL, String(b.id)), b);
+  }
+}
+
+// Real-time listener — updates UI on any device instantly
+function startSync() {
+  onSnapshot(collection(db, COLL), snap => {
+    blocks = snap.docs.map(d => d.data()).sort((a,b) => a.id - b.id);
+    nextId = blocks.length ? Math.max(...blocks.map(b=>b.id)) + 1 : 1;
+    updateNav();
+    renderHome();
+    if (document.getElementById('panel-blocks').classList.contains('active')) renderBlocks();
+    if (document.getElementById('panel-wh').classList.contains('active')) renderWH();
+    if (document.getElementById('panel-heat').classList.contains('active')) renderHeatmap();
+  });
+}
+
+// Show loading state
+document.getElementById('nav-sub').textContent = 'Conectando...';
+seedIfEmpty().then(() => { startSync(); dbReady = true; });
 let sortCol = 'id', page = 1, PER = 20;
 let filterWH = '', filterFranja = '';
 
@@ -654,11 +698,15 @@ function addBlock() {
   const reps = parseInt(document.getElementById('in-rep').value) || 1;
   if (!wh || !start || isNaN(dur) || isNaN(pago)) { alert('Completa: warehouse, block start, duración y pago.'); return; }
   const grabbedAt = fecha && grabbed ? `${fecha} ${grabbed}` : (grabbed || 'Desconocida');
+  const promises = [];
   for (let i = 0; i < reps; i++) {
-    blocks.push({id:nextId++, warehouse:wh, dia, grabbedAt, blockStart:start, duracion:dur, pago, lead, franja, fuente});
+    const b = {id:nextId++, warehouse:wh, dia, grabbedAt, blockStart:start, duracion:dur, pago, lead, franja, fuente};
+    promises.push(saveBlock(b));
   }
-  saveBlocks(); updateNav(); clearForm();
-  showToast(reps === 1 ? `✓ Bloque #${nextId-1} agregado` : `✓ ${reps} bloques agregados`);
+  Promise.all(promises).then(() => {
+    showToast(reps === 1 ? `✓ Bloque agregado` : `✓ ${reps} bloques agregados`);
+    clearForm();
+  });
 }
 function clearForm() {
   ['in-fecha','in-grabbed','in-start','in-dur','in-pago','in-lead'].forEach(id => document.getElementById(id).value = '');
@@ -671,17 +719,12 @@ function clearForm() {
 }
 function deleteBlock(id) {
   if (!confirm(`¿Eliminar bloque #${id}?`)) return;
-  blocks = blocks.filter(b => b.id !== id);
-  saveBlocks(); updateNav(); renderHome();
-  showToast('Bloque eliminado');
-  renderBlocks();
+  removeBlock(id).then(() => showToast('Bloque eliminado'));
 }
 function confirmReset() {
   if (confirm('¿Borrar TODOS los datos? Esta acción no se puede deshacer.')) {
     if (confirm('¿Seguro? Se perderán todos los bloques.')) {
-      localStorage.removeItem(LS_KEY);
-      blocks = loadBlocks(); nextId = Math.max(...blocks.map(b=>b.id))+1;
-      saveBlocks(); updateNav(); showToast('Datos reiniciados'); renderHome();
+      Promise.all(blocks.map(b => removeBlock(b.id))).then(() => showToast('Datos borrados'));
     }
   }
 }
@@ -702,11 +745,10 @@ function importData(e) {
     try {
       const imported = JSON.parse(ev.target.result);
       if (!Array.isArray(imported) || !imported[0]?.warehouse) { alert('Archivo inválido'); return; }
-      if (!confirm(`Importar ${imported.length} bloques? Reemplazará los datos actuales.`)) return;
-      blocks = imported;
-      nextId = Math.max(...blocks.map(b=>b.id), 0) + 1;
-      saveBlocks(); updateNav(); renderHome();
-      showToast(`${imported.length} bloques importados`);
+      if (!confirm(`Importar ${imported.length} bloques? Se agregarán a los datos actuales.`)) return;
+      Promise.all(imported.map(b => saveBlock(b))).then(() => {
+        showToast(`${imported.length} bloques importados`);
+      });
     } catch { alert('Error leyendo el archivo JSON'); }
   };
   reader.readAsText(file);
@@ -815,7 +857,6 @@ function renderHeatmap() {
 
 // --- INIT ---
 updateNav();
-renderHome();
 </script>
 </body>
 </html>
