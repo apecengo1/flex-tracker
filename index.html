@@ -858,6 +858,21 @@ function renderHeatmap() {
   document.getElementById('insights').innerHTML = insightHTML || '<div class="empty">Sin datos suficientes</div>';
 }
 
+// --- EXPOSE TO WINDOW (required for onclick handlers) ---
+window.showPanel = showPanel;
+window.setSort = setSort;
+window.addBlock = addBlock;
+window.clearForm = clearForm;
+window.deleteBlock = deleteBlock;
+window.confirmReset = confirmReset;
+window.exportData = exportData;
+window.importData = importData;
+window.calcLead = calcLead;
+window.updateRep = updateRep;
+window.changeRep = changeRep;
+window.autoCalcForm = autoCalcForm;
+window.renderBlocks = renderBlocks;
+
 // --- INIT ---
 updateNav();
 </script>
