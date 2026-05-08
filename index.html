@@ -468,6 +468,8 @@ function startSync() {
     if (document.getElementById('panel-heat').classList.contains('active')) renderHeatmap();
   });
 }
+let blocks = [];
+let nextId = 1;
 let sortCol = 'id', page = 1, PER = 20;
 let filterWH = '', filterFranja = '';
 
@@ -494,8 +496,8 @@ function parseTime(t) {
 
 // --- NAV ---
 function updateNav() {
-  const valid = blocks.filter(b => b.franja !== 'OUTLIER');
-  document.getElementById('nav-sub').textContent = `${valid.length} bloques registrados`;
+  const valid = (blocks||[]).filter(b => b.franja !== 'OUTLIER');
+  document.getElementById('nav-sub').textContent = valid.length ? `${valid.length} bloques registrados` : 'Conectando...';
   const d = new Date();
   document.getElementById('nav-date').textContent = d.toLocaleDateString('es', {weekday:'short',month:'short',day:'numeric'});
 }
