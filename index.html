@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Flex Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f;
+  --bg2: #1a1a1a;
+  --bg3: #232323;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0f0f0;
+  --muted: #888;
+  --muted2: #555;
+  --accent: #f5c842;
+  --accent2: #e0aa20;
+  --green: #4ade80;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --orange: #fb923c;
+  --purple: #a78bfa;
+  --teal: #2dd4bf;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { font-size: 14px; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
+
+/* NAV */
+.nav-bar { background: var(--bg); border-bottom: 1px solid var(--border); padding: 0 16px; display: flex; align-items: center; justify-content: space-between; height: 52px; position: sticky; top: 0; z-index: 100; }
+.nav-logo { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--accent); letter-spacing: .04em; }
+.nav-sub { font-size: 11px; color: var(--muted); }
+
+/* BOTTOM TABS */
+.bottom-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg2); border-top: 1px solid var(--border); display: flex; z-index: 100; }
+.btab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 4px 10px; gap: 3px; border: none; background: none; color: var(--muted); font-family: var(--sans); font-size: 10px; cursor: pointer; transition: color .15s; }
+.btab.active { color: var(--accent); }
+.btab svg { width: 20px; height: 20px; }
+
+/* PANELS */
+.panel { display: none; padding: 16px; }
+.panel.active { display: block; }
+
+/* METRIC GRID */
+.metric-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.metric-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+.metric-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.metric-val { font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--text); line-height: 1; }
+.metric-val.accent { color: var(--accent); }
+.metric-sub { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+/* SECTION HEADER */
+.sec { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; margin-top: 20px; }
+.sec:first-child { margin-top: 0; }
+
+/* CARDS */
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 8px; }
+.card-row { display: flex; justify-content: space-between; align-items: flex-start; }
+.card-wh { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--accent); }
+.card-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.card-pay { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--green); }
+.card-hr { font-size: 11px; color: var(--muted); text-align: right; }
+.card-pills { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+.pill { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px; font-family: var(--mono); }
+.pill-mad { background: rgba(167,139,250,.15); color: #a78bfa; }
+.pill-man { background: rgba(45,212,191,.15); color: #2dd4bf; }
+.pill-tar { background: rgba(245,200,66,.15); color: var(--accent); }
+.pill-noc { background: rgba(96,165,250,.15); color: #60a5fa; }
+.pill-out { background: rgba(248,113,113,.15); color: #f87171; }
+.pill-wh { background: rgba(255,255,255,.06); color: var(--muted); }
+
+/* FORM */
+.form-section { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+.form-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 14px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.full { grid-column: 1/-1; }
+.form-group label { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
+.form-group input, .form-group select {
+  height: 40px; padding: 0 12px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: var(--sans); font-size: 13px; outline: none;
+  -webkit-appearance: none; appearance: none;
+  transition: border-color .15s;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+.form-group select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+.btn { height: 44px; padding: 0 20px; border-radius: var(--radius-sm); border: none; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.btn-primary { background: var(--accent); color: #0f0f0f; width: 100%; margin-top: 4px; }
+.btn-primary:active { background: var(--accent2); transform: scale(.98); }
+.btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); }
+.btn-secondary:active { opacity: .7; }
+.btn-row { display: flex; gap: 8px; margin-top: 12px; }
+.btn-row .btn-primary { flex: 1; margin-top: 0; }
+
+/* LEAD CALC */
+.calc-box { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-top: 12px; }
+.calc-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+.calc-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; }
+.calc-result { font-family: var(--mono); font-size: 15px; font-weight: 500; color: var(--accent); margin-top: 8px; min-height: 20px; }
+
+/* FILTER BAR */
+.filter-bar { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
+.filter-bar::-webkit-scrollbar { display: none; }
+.fchip { flex-shrink: 0; height: 30px; padding: 0 12px; border-radius: 20px; border: 1px solid var(--border2); background: var(--bg2); color: var(--muted); font-size: 11px; font-weight: 500; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.fchip.active { background: var(--accent); color: #0f0f0f; border-color: var(--accent); }
+
+/* BLOCK LIST */
+.block-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.block-row:last-child { border-bottom: none; }
+.block-left { flex: 1; }
+.block-wh { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--accent); }
+.block-info { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.block-right { text-align: right; }
+.block-pay { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--green); }
+.block-hr { font-size: 10px; color: var(--muted); }
+.del-btn { background: none; border: none; color: var(--muted2); font-size: 18px; padding: 4px 8px; cursor: pointer; border-radius: 4px; margin-left: 8px; }
+.del-btn:active { color: var(--red); background: rgba(248,113,113,.1); }
+
+/* SORT BAR */
+.sort-bar { display: flex; gap: 6px; margin-bottom: 10px; }
+.sort-btn { flex: 1; height: 28px; background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; color: var(--muted); font-size: 10px; cursor: pointer; transition: all .15s; font-family: var(--sans); }
+.sort-btn.active { border-color: var(--accent); color: var(--accent); }
+
+/* PAGINATION */
+.pagination { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 12px; font-size: 12px; color: var(--muted); }
+.page-btn { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); width: 32px; height: 32px; border-radius: var(--radius-sm); cursor: pointer; font-size: 16px; }
+.page-btn:disabled { opacity: .3; cursor: default; }
+
+/* WH CARDS */
+.wh-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+.wh-stat { background: var(--bg3); border-radius: var(--radius-sm); padding: 8px 10px; }
+.wh-stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.wh-stat-val { font-family: var(--mono); font-size: 16px; font-weight: 500; color: var(--text); margin-top: 2px; }
+.wh-header { display: flex; justify-content: space-between; align-items: center; }
+.wh-name { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--accent); }
+.wh-count { font-size: 11px; color: var(--muted); background: var(--bg3); padding: 2px 8px; border-radius: 20px; }
+
+/* HEATMAP */
+.hm-scroll { overflow-x: auto; margin-bottom: 16px; }
+.hm-table { border-collapse: collapse; font-size: 10px; white-space: nowrap; }
+.hm-table th { padding: 5px 6px; color: var(--muted); font-weight: 500; font-family: var(--mono); border: 1px solid var(--border); background: var(--bg2); }
+.hm-table td { padding: 5px 7px; text-align: center; border: 1px solid var(--border); font-family: var(--mono); font-size: 11px; min-width: 32px; }
+.hm0 { background: transparent; color: transparent; }
+.hm1 { background: rgba(245,200,66,.12); color: var(--accent); }
+.hm2 { background: rgba(245,200,66,.28); color: var(--accent); }
+.hm3 { background: rgba(245,200,66,.55); color: #0f0f0f; }
+.hm4 { background: var(--accent); color: #0f0f0f; font-weight: 600; }
+.hm-day { text-align: left !important; color: var(--text) !important; font-family: var(--sans) !important; font-size: 11px !important; font-weight: 500 !important; }
+
+/* INSIGHT */
+.insight { border-left: 2px solid var(--accent); padding: 8px 12px; margin-bottom: 8px; background: rgba(245,200,66,.05); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.insight-day { font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 3px; font-family: var(--mono); }
+.insight-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* SUCCESS TOAST */
+.toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); background: var(--green); color: #0f0f0f; font-size: 12px; font-weight: 600; padding: 8px 18px; border-radius: 20px; z-index: 200; opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; }
+
+/* EMPTY */
+.empty { text-align: center; padding: 32px 0; color: var(--muted); font-size: 13px; }
+
+/* SEARCH */
+.search-input { width: 100%; height: 38px; padding: 0 12px 0 36px; background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; font-family: var(--sans); outline: none; margin-bottom: 10px; position: relative; }
+.search-wrap { position: relative; margin-bottom: 10px; }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); width: 16px; }
+
+/* LEGEND */
+.legend { display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.leg-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+.leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="nav-bar">
+  <div>
+    <div class="nav-logo">⚡ FLEX TRACKER</div>
+    <div class="nav-sub" id="nav-sub">cargando...</div>
+  </div>
+  <div style="font-family:var(--mono);font-size:11px;color:var(--muted)" id="nav-date"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- DASHBOARD -->
+<div class="panel active" id="panel-home">
+  <div class="metric-row" id="metrics"></div>
+  <div class="sec">Bloques recientes</div>
+  <div class="card" id="recent-list"></div>
+  <div class="sec">Top 5 por $/hr</div>
+  <div class="card" id="top-list"></div>
+  <div class="sec">Por warehouse</div>
+  <div id="wh-mini"></div>
+</div>
+
+<!-- BLOQUES -->
+<div class="panel" id="panel-blocks">
+  <div class="search-wrap">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" class="search-input" id="search" placeholder="Buscar..." oninput="renderBlocks()">
+  </div>
+  <div class="filter-bar" id="filter-bar-wh"></div>
+  <div class="filter-bar" id="filter-bar-franja"></div>
+  <div class="sort-bar">
+    <button class="sort-btn active" id="sort-id" onclick="setSort('id')">Reciente</button>
+    <button class="sort-btn" id="sort-pago" onclick="setSort('pago')">Pago ↓</button>
+    <button class="sort-btn" id="sort-hr" onclick="setSort('hr')">$/hr ↓</button>
+    <button class="sort-btn" id="sort-lead" onclick="setSort('lead')">Lead ↓</button>
+  </div>
+  <div id="block-list"></div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- AGREGAR -->
+<div class="panel" id="panel-add">
+  <div class="form-section">
+    <div class="form-title">Nuevo bloque</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Warehouse</label>
+        <select id="in-wh">
+          <option>VGA1</option><option>VTL2</option><option>DGE9</option>
+          <option>DTG5</option><option>UGA4</option><option>DGT2</option><option>DGT8</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Día</label>
+        <select id="in-dia">
+          <option>Lunes</option><option>Martes</option><option>Miércoles</option>
+          <option>Jueves</option><option>Viernes</option><option>Sábado</option><option>Domingo</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Fecha (ej: May 8)</label>
+        <input type="text" id="in-fecha" placeholder="May 9">
+      </div>
+      <div class="form-group">
+        <label>Grabbed At</label>
+        <input type="text" id="in-grabbed" placeholder="3:26 AM" oninput="autoCalcForm()">
+      </div>
+      <div class="form-group">
+        <label>Block Start</label>
+        <input type="text" id="in-start" placeholder="4:00 AM" oninput="autoCalcForm()">
+      </div>
+      <div class="form-group">
+        <label>Duración (hrs)</label>
+        <input type="number" id="in-dur" placeholder="4.5" step="0.5" min="1" max="8" inputmode="decimal">
+      </div>
+      <div class="form-group">
+        <label>Pago ($)</label>
+        <input type="number" id="in-pago" placeholder="180" step="0.5" inputmode="decimal">
+      </div>
+      <div class="form-group">
+        <label>Lead (min)</label>
+        <input type="number" id="in-lead" placeholder="auto" inputmode="numeric" style="color:var(--accent)">
+      </div>
+      <div class="form-group">
+        <label>Franja</label>
+        <div id="in-franja-display" style="height:40px;padding:0 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);display:flex;align-items:center;font-size:13px;color:var(--accent);font-family:var(--mono)">—</div>
+        <input type="hidden" id="in-franja" value="">
+      </div>
+      <div class="form-group">
+        <label>Fuente</label>
+        <select id="in-fuente">
+          <option>Screenshot</option><option>ROUTES MSG</option><option>routes4u</option><option>Grupo</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="addBlock()">+ Agregar</button>
+      <button class="btn btn-secondary" onclick="clearForm()">Limpiar</button>
+    </div>
+  </div>
+
+  <div class="calc-box">
+    <div class="calc-title">Calculadora de lead time</div>
+    <div class="calc-row">
+      <div class="form-group">
+        <label>Grabbed</label>
+        <input type="text" id="calc-g" placeholder="3:26 AM">
+      </div>
+      <div class="form-group">
+        <label>Block start</label>
+        <input type="text" id="calc-s" placeholder="4:00 AM">
+      </div>
+      <button class="btn btn-secondary" style="height:40px;padding:0 14px;margin-top:18px" onclick="calcLead()">Calc</button>
+    </div>
+    <div class="calc-result" id="calc-res"></div>
+  </div>
+
+  <div style="margin-top:16px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius)">
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Zona peligrosa</div>
+    <button class="btn btn-secondary" style="width:100%;color:var(--red);border-color:rgba(248,113,113,.3)" onclick="confirmReset()">Borrar todos los datos</button>
+  </div>
+</div>
+
+<!-- WAREHOUSES -->
+<div class="panel" id="panel-wh">
+  <div id="wh-cards"></div>
+</div>
+
+<!-- HEATMAP -->
+<div class="panel" id="panel-heat">
+  <div class="sec">Heatmap — inicio del bloque</div>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot hm1"></div>1</div>
+    <div class="leg-item"><div class="leg-dot hm2"></div>2</div>
+    <div class="leg-item"><div class="leg-dot hm3"></div>3</div>
+    <div class="leg-item"><div class="leg-dot hm4"></div>4+</div>
+  </div>
+  <div class="hm-scroll"><div id="heatmap"></div></div>
+  <div class="sec">Insights por día</div>
+  <div id="insights"></div>
+</div>
+
+<!-- BOTTOM TABS -->
+<div class="bottom-tabs">
+  <button class="btab active" id="tab-home" onclick="showPanel('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Dashboard
+  </button>
+  <button class="btab" id="tab-blocks" onclick="showPanel('blocks')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    Bloques
+  </button>
+  <button class="btab" id="tab-add" onclick="showPanel('add')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Agregar
+  </button>
+  <button class="btab" id="tab-wh" onclick="showPanel('wh')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    WH
+  </button>
+  <button class="btab" id="tab-heat" onclick="showPanel('heat')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Heatmap
+  </button>
+</div>
+
+<script>
+const SEED = [
+  [1,"VGA1","Miércoles","Apr 29 6:52 PM","7:15 PM",3,90,23,"Tarde","Screenshot"],
+  [2,"VGA1","Jueves","Apr 30 5:06 PM","6:00 PM",3,90,54,"Tarde","routes4u"],
+  [3,"VGA1","Domingo","Apr 26 7:07 AM","6:15 PM",3,93,null,"Tarde","routes4u"],
+  [4,"VGA1","Martes","May 5 6:47 PM","7:15 PM",2.5,75,28,"Tarde","Screenshot"],
+  [5,"VGA1","Martes","May 5 5:32 PM","5:45 PM",4,120,13,"Tarde","ROUTES MSG"],
+  [6,"VGA1","Jueves","May 7 5:43 AM","6:30 AM",4.5,126,47,"Mañana","Screenshot"],
+  [7,"VGA1","Jueves","May 7 5:30 PM","6:15 PM",3.5,100,45,"Tarde","ROUTES MSG"],
+  [8,"VGA1","Jueves","May 7 8:04 PM","8:30 PM",2,60,26,"Noche","Screenshot"],
+  [9,"VGA1","Viernes","May 8 2:46 PM","3:15 PM",3,90,29,"Tarde","routes4u"],
+  [10,"VGA1","Viernes","May 8 6:47 PM","7:15 PM",3,90,28,"Tarde","Screenshot"],
+  [11,"VGA1","Viernes","May 8 5:30 PM","6:45 PM",3,75,75,"Tarde","Screenshot"],
+  [12,"VGA1","Sábado","May 9 6:53 PM","7:15 PM",3,90,22,"Tarde","routes4u"],
+  [13,"VGA1","Sábado","May 9 6:49 PM","7:15 PM",3.5,105,26,"Tarde","Screenshot"],
+  [14,"VGA1","Domingo","May 3 12:03 AM","3:45 AM",4,136,222,"Madrugada","ROUTES MSG"],
+  [15,"VGA1","Domingo","May 3 1:05 AM","4:00 AM",4,154,175,"Madrugada","ROUTES MSG"],
+  [16,"VGA1","Domingo","May 3 1:18 AM","4:00 AM",4,154,162,"Madrugada","ROUTES MSG"],
+  [17,"VTL2","Domingo","Apr 26 7:19 AM","12:00 PM",4.5,135,null,"Mañana","routes4u"],
+  [18,"VTL2","Lunes","Apr 27 10:18 PM","Apr 29 4:45 AM",3.5,101.5,null,"OUTLIER","ROUTES MSG"],
+  [19,"VTL2","Martes","Apr 28 1:58 PM","2:45 PM",4.5,135,47,"Tarde","ROUTES MSG"],
+  [20,"VTL2","Sábado","May 2 4:58 PM","5:45 PM",3.5,112,47,"Tarde","ROUTES MSG"],
+  [21,"VTL2","Domingo","May 3 3:22 AM","3:30 AM",5,215,8,"Madrugada","ROUTES MSG"],
+  [22,"VTL2","Jueves","May 7 9:41 AM","9:45 AM",5,180,4,"Mañana","ROUTES MSG"],
+  [23,"VTL2","Jueves","May 7 4:22 PM","4:30 PM",5,195,8,"Tarde","ROUTES MSG"],
+  [24,"VTL2","Jueves","May 7 11:14 AM","12:00 PM",3,96,46,"Mañana","Screenshot"],
+  [25,"VTL2","Sábado","May 9 1:42 AM","4:15 AM",4,162,153,"Madrugada","Screenshot"],
+  [26,"DGE9","Sábado","Apr 25 3:23 PM","5:15 PM",4,114,112,"Tarde","routes4u"],
+  [27,"DGE9","Lunes","May 4 3:07 PM","6:30 PM",3.5,98,203,"Tarde","ROUTES MSG"],
+  [28,"DGE9","Lunes","May 4 4:22 PM","6:00 PM",4,116,98,"Tarde","routes4u"],
+  [29,"DTG5","Jueves","Apr 23 9:30 PM","Apr 24 3:30 AM",3.5,103.5,null,"OUTLIER","routes4u"],
+  [30,"DTG5","Sábado","May 2 3:12 PM","4:00 PM",4,120,48,"Tarde","ROUTES MSG"],
+  [31,"DTG5","Jueves","May 7 5:27 PM","6:30 PM",2,60,63,"Tarde","routes4u"],
+  [32,"DTG5","Viernes","May 8 5:17 PM","6:00 PM",4,120,43,"Tarde","Screenshot"],
+  [33,"UGA4","Viernes","Apr 24 5:53 PM","6:45 PM",1.5,43,52,"Tarde","routes4u"],
+  [34,"UGA4","Sábado","Apr 25 4:45 PM","5:45 PM",1.5,39,60,"Tarde","routes4u"],
+  [35,"UGA4","Sábado","Apr 25 5:18 PM","6:15 PM",1.5,41.5,57,"Tarde","routes4u"],
+  [36,"UGA4","Viernes","May 1 2:27 AM","3:15 AM",2.5,87.5,48,"Madrugada","ROUTES MSG"],
+  [37,"DGT2","Martes","May 5 5:00 PM","5:45 PM",3,85.5,45,"Tarde","routes4u"],
+  [38,"DGT2","Miércoles","May 6 5:13 PM","5:30 PM",3,90,17,"Tarde","routes4u"],
+  [39,"DGT2","Miércoles","May 6 6:35 AM","6:45 AM",3.5,101.5,10,"Mañana","ROUTES MSG"],
+  [40,"DGT8","—","Desconocida","6:30 PM",3,90,null,"Tarde","Screenshot"],
+  [41,"VTL2","Lunes","May 5 10:12 AM","10:45 AM",5,160,33,"Mañana","Grupo"],
+  [42,"VTL2","Lunes","May 5 10:02 AM","10:45 AM",5,160,43,"Mañana","Grupo"],
+  [43,"VGA1","Lunes","May 5 6:47 PM","7:15 PM",3.5,105,28,"Tarde","Grupo"],
+  [44,"VGA1","Lunes","May 5 6:48 PM","7:15 PM",3.5,105,27,"Tarde","Grupo"],
+  [45,"VTL2","Viernes","May 8 3:33 AM","4:15 AM",4,138,42,"Madrugada","ROUTES MSG"],
+  [46,"VTL2","Viernes","May 8 3:26 AM","4:00 AM",4.5,191.5,34,"Madrugada","Screenshot"],
+  [47,"VGA1","Viernes","May 8 4:16 AM","4:15 AM",3.5,122.5,0,"Madrugada","Screenshot"],
+  [48,"VGA1","Viernes","May 8 6:37 AM","6:45 AM",4,120,8,"Mañana","Screenshot"],
+  [49,"VGA1","Viernes","May 8 6:24 AM","6:45 AM",4,120,21,"Mañana","Screenshot"],
+  [50,"VTL2","Viernes","May 8 7:45 AM","8:00 AM",4.5,162,15,"Mañana","Screenshot"],
+  [51,"VTL2","Viernes","May 8 10:31 AM","11:00 AM",5,180,29,"Mañana","Screenshot"],
+];
+
+const LS_KEY = 'flex_tracker_v3_data';
+function loadBlocks() {
+  const saved = localStorage.getItem(LS_KEY);
+  if (saved) return JSON.parse(saved);
+  return SEED.map(r => ({id:r[0],warehouse:r[1],dia:r[2],grabbedAt:r[3],blockStart:r[4],duracion:r[5],pago:r[6],lead:r[7],franja:r[8],fuente:r[9]}));
+}
+function saveBlocks() { localStorage.setItem(LS_KEY, JSON.stringify(blocks)); }
+
+let blocks = loadBlocks();
+let nextId = Math.max(...blocks.map(b=>b.id), 0) + 1;
+let sortCol = 'id', page = 1, PER = 20;
+let filterWH = '', filterFranja = '';
+
+// --- UTILS ---
+function hr(b) { return b.duracion && b.pago ? b.pago / b.duracion : null; }
+function franjaPill(f) {
+  const m = {Madrugada:'mad',Mañana:'man',Tarde:'tar',Noche:'noc',OUTLIER:'out'};
+  return `<span class="pill pill-${m[f]||'out'}">${f}</span>`;
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+function parseTime(t) {
+  if (!t || t === '—' || /Apr|May/i.test(t)) return null;
+  const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!m) return null;
+  let h = parseInt(m[1]), min = parseInt(m[2]), ap = m[3].toUpperCase();
+  if (ap === 'PM' && h !== 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return h * 60 + min;
+}
+
+// --- NAV ---
+function updateNav() {
+  const valid = blocks.filter(b => b.franja !== 'OUTLIER');
+  document.getElementById('nav-sub').textContent = `${valid.length} bloques registrados`;
+  const d = new Date();
+  document.getElementById('nav-date').textContent = d.toLocaleDateString('es', {weekday:'short',month:'short',day:'numeric'});
+}
+
+// --- PANELS ---
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.btab').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'home') renderHome();
+  if (name === 'blocks') renderBlocks();
+  if (name === 'wh') renderWH();
+  if (name === 'heat') renderHeatmap();
+}
+
+// --- HOME ---
+function renderHome() {
+  const valid = blocks.filter(b => b.franja !== 'OUTLIER');
+  const pays = valid.map(b => b.pago);
+  const hrs = valid.filter(b => b.duracion).map(b => b.pago / b.duracion);
+  const leads = valid.filter(b => b.lead != null).map(b => b.lead);
+  const avgHr = hrs.length ? (hrs.reduce((a,b)=>a+b,0)/hrs.length).toFixed(2) : '—';
+  const avgLead = leads.length ? Math.round(leads.reduce((a,b)=>a+b,0)/leads.length) : '—';
+
+  const avgPay = pays.length ? Math.round(pays.reduce((a,b)=>a+b,0)/pays.length) : 0;
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric-card"><div class="metric-label">Bloques</div><div class="metric-val accent">${valid.length}</div></div>
+    <div class="metric-card"><div class="metric-label">Mejor $</div><div class="metric-val">$${Math.max(...pays)}</div></div>
+    <div class="metric-card"><div class="metric-label">Pago prom</div><div class="metric-val">$${avgPay}</div></div>
+    <div class="metric-card"><div class="metric-label">$/hr prom</div><div class="metric-val">$${avgHr}</div></div>
+    <div class="metric-card"><div class="metric-label">Mejor $/hr</div><div class="metric-val">$${Math.max(...hrs).toFixed(2)}</div></div>
+    <div class="metric-card"><div class="metric-label">Lead prom</div><div class="metric-val">${avgLead}<span style="font-size:11px;color:var(--muted)">m</span></div></div>
+  `;
+
+  const last5 = [...blocks].reverse().slice(0, 5);
+  document.getElementById('recent-list').innerHTML = last5.map(b => `
+    <div class="block-row">
+      <div class="block-left">
+        <div class="block-wh">${b.warehouse} <span style="color:var(--muted);font-size:11px;font-family:var(--sans)">— ${b.dia}</span></div>
+        <div class="block-info">${b.blockStart} · ${b.duracion}hrs · Lead: ${b.lead != null ? b.lead+'m' : '—'}</div>
+      </div>
+      <div class="block-right">
+        <div class="block-pay">$${b.pago}</div>
+        <div class="block-hr">${b.duracion ? '$'+(b.pago/b.duracion).toFixed(2)+'/hr' : '—'}</div>
+      </div>
+    </div>`).join('');
+
+  const top5 = [...valid].filter(b=>b.duracion).sort((a,b)=>(b.pago/b.duracion)-(a.pago/a.duracion)).slice(0,5);
+  document.getElementById('top-list').innerHTML = top5.map((b,i) => `
+    <div class="block-row">
+      <div class="block-left">
+        <div class="block-wh"><span style="color:var(--muted);font-size:11px">${['🥇','🥈','🥉','4°','5°'][i]} </span>${b.warehouse}</div>
+        <div class="block-info">${b.dia} · ${b.blockStart} · ${b.duracion}hrs</div>
+      </div>
+      <div class="block-right">
+        <div class="block-pay">$${(b.pago/b.duracion).toFixed(2)}<span style="font-size:10px;color:var(--muted)">/hr</span></div>
+        <div class="block-hr">$${b.pago} total</div>
+      </div>
+    </div>`).join('');
+
+  const whCounts = {};
+  valid.forEach(b => whCounts[b.warehouse] = (whCounts[b.warehouse]||0)+1);
+  const sortedWH = Object.entries(whCounts).sort((a,b)=>b[1]-a[1]);
+  const maxCount = sortedWH[0]?.[1] || 1;
+  document.getElementById('wh-mini').innerHTML = sortedWH.map(([wh,cnt]) => {
+    const pct = Math.round(cnt/maxCount*100);
+    const wb2 = valid.filter(b=>b.warehouse===wh);
+    const avgPay = Math.round(wb2.reduce((s,b)=>s+b.pago,0)/wb2.length);
+    return `<div class="card" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--accent)">${wh}</span>
+        <span style="font-size:12px;color:var(--muted)">${cnt} bloques · $${avgPay} prom</span>
+      </div>
+      <div style="height:4px;background:var(--bg3);border-radius:2px">
+        <div style="height:4px;background:var(--accent);border-radius:2px;width:${pct}%;transition:width .4s"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// --- BLOCKS LIST ---
+function getFiltered() {
+  const q = document.getElementById('search')?.value.toLowerCase() || '';
+  return blocks.filter(b => {
+    if (filterWH && b.warehouse !== filterWH) return false;
+    if (filterFranja && b.franja !== filterFranja) return false;
+    if (q && !JSON.stringify(b).toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+function setSort(col) {
+  sortCol = col; page = 1;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sort-' + col).classList.add('active');
+  renderBlocks();
+}
+function renderBlocks() {
+  const whs = [...new Set(blocks.map(b=>b.warehouse))].sort();
+  const franjas = ['Madrugada','Mañana','Tarde','Noche','OUTLIER'];
+  document.getElementById('filter-bar-wh').innerHTML =
+    `<button class="fchip ${!filterWH?'active':''}" onclick="filterWH='';page=1;renderBlocks()">Todos</button>` +
+    whs.map(w => `<button class="fchip ${filterWH===w?'active':''}" onclick="filterWH='${w}';page=1;renderBlocks()">${w}</button>`).join('');
+  document.getElementById('filter-bar-franja').innerHTML =
+    franjas.map(f => `<button class="fchip ${filterFranja===f?'active':''}" onclick="filterFranja=filterFranja==='${f}'?'':'${f}';page=1;renderBlocks()">${f}</button>`).join('');
+
+  const filtered = getFiltered();
+  const sorted = [...filtered].sort((a,b) => {
+    if (sortCol==='pago') return b.pago - a.pago;
+    if (sortCol==='hr') return (hr(b)||0) - (hr(a)||0);
+    if (sortCol==='lead') return (b.lead||0) - (a.lead||0);
+    return b.id - a.id;
+  });
+  const start = (page-1)*PER, paged = sorted.slice(start, start+PER);
+  if (!paged.length) {
+    document.getElementById('block-list').innerHTML = '<div class="empty">No hay bloques</div>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+  document.getElementById('block-list').innerHTML = `<div class="card">${paged.map(b => `
+    <div class="block-row">
+      <div class="block-left">
+        <div class="block-wh">${b.warehouse} <span style="font-family:var(--sans);font-size:10px;color:var(--muted)">#${b.id}</span></div>
+        <div class="block-info">${b.dia} · ${b.blockStart} · ${b.duracion}hrs</div>
+        <div class="card-pills" style="margin-top:4px">${franjaPill(b.franja)}<span class="pill pill-wh" style="font-size:9px">${b.fuente}</span>${b.lead!=null?`<span class="pill pill-wh">L:${b.lead}m</span>`:''}</div>
+      </div>
+      <div class="block-right" style="display:flex;align-items:center;gap:4px">
+        <div>
+          <div class="block-pay">$${b.pago}</div>
+          <div class="block-hr">${b.duracion?'$'+(b.pago/b.duracion).toFixed(2)+'/hr':'—'}</div>
+        </div>
+        <button class="del-btn" onclick="deleteBlock(${b.id})">×</button>
+      </div>
+    </div>`).join('')}</div>`;
+
+  const pages = Math.ceil(filtered.length / PER);
+  document.getElementById('pagination').innerHTML = pages > 1 ? `
+    <button class="page-btn" onclick="page=Math.max(1,page-1);renderBlocks()" ${page===1?'disabled':''}>‹</button>
+    <span>${page} / ${pages} · ${filtered.length} bloques</span>
+    <button class="page-btn" onclick="page=Math.min(${pages},page+1);renderBlocks()" ${page===pages?'disabled':''}>›</button>
+  ` : `<span>${filtered.length} bloques</span>`;
+}
+
+// --- ADD ---
+function franjaFromMinutes(mins) {
+  if (mins === null) return '';
+  if (mins >= 0 && mins < 330) return 'Madrugada';   // 12:00am–5:29am
+  if (mins >= 330 && mins < 720) return 'Mañana';    // 5:30am–11:59am
+  if (mins >= 720 && mins < 1200) return 'Tarde';    // 12:00pm–7:59pm
+  return 'Noche';                                     // 8:00pm–11:59pm
+}
+function autoCalcForm() {
+  const startRaw = document.getElementById('in-start').value.trim();
+  const grabbedRaw = document.getElementById('in-grabbed').value.trim();
+  const startMins = parseTime(startRaw);
+  const grabbedMins = parseTime(grabbedRaw);
+
+  // Auto franja from block start
+  const franja = franjaFromMinutes(startMins);
+  document.getElementById('in-franja').value = franja;
+  const pill = {Madrugada:'#a78bfa',Mañana:'#2dd4bf',Tarde:'#f5c842',Noche:'#60a5fa'};
+  document.getElementById('in-franja-display').textContent = franja || '—';
+  document.getElementById('in-franja-display').style.color = pill[franja] || 'var(--muted)';
+
+  // Auto lead from grabbed + start
+  if (grabbedMins !== null && startMins !== null) {
+    const lead = startMins - grabbedMins;
+    document.getElementById('in-lead').value = lead;
+    document.getElementById('in-lead').style.color = lead < 0 ? 'var(--red)' : 'var(--accent)';
+  }
+}
+function addBlock() {
+  const wh = document.getElementById('in-wh').value;
+  const dia = document.getElementById('in-dia').value;
+  const fecha = document.getElementById('in-fecha').value.trim();
+  const grabbed = document.getElementById('in-grabbed').value.trim();
+  const start = document.getElementById('in-start').value.trim();
+  const dur = parseFloat(document.getElementById('in-dur').value);
+  const pago = parseFloat(document.getElementById('in-pago').value);
+  const leadVal = document.getElementById('in-lead').value;
+  const lead = leadVal !== '' ? parseInt(leadVal) : null;
+  const franja = document.getElementById('in-franja').value || 'Tarde';
+  const fuente = document.getElementById('in-fuente').value;
+  if (!wh || !start || isNaN(dur) || isNaN(pago)) { alert('Completa: warehouse, block start, duración y pago.'); return; }
+  const grabbedAt = fecha && grabbed ? `${fecha} ${grabbed}` : (grabbed || 'Desconocida');
+  blocks.push({id:nextId++, warehouse:wh, dia, grabbedAt, blockStart:start, duracion:dur, pago, lead, franja, fuente});
+  saveBlocks();
+  updateNav();
+  clearForm();
+  showToast('✓ Bloque #' + (nextId-1) + ' agregado');
+}
+function clearForm() {
+  ['in-fecha','in-grabbed','in-start','in-dur','in-pago','in-lead'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('in-franja').value = '';
+  document.getElementById('in-franja-display').textContent = '—';
+  document.getElementById('in-franja-display').style.color = 'var(--muted)';
+  document.getElementById('in-lead').style.color = 'var(--accent)';
+}
+function deleteBlock(id) {
+  if (!confirm(`¿Eliminar bloque #${id}?`)) return;
+  blocks = blocks.filter(b => b.id !== id);
+  saveBlocks(); updateNav(); renderHome();
+  showToast('Bloque eliminado');
+  renderBlocks();
+}
+function confirmReset() {
+  if (confirm('¿Borrar TODOS los datos? Esta acción no se puede deshacer.')) {
+    if (confirm('¿Seguro? Se perderán todos los bloques.')) {
+      localStorage.removeItem(LS_KEY);
+      blocks = loadBlocks(); nextId = Math.max(...blocks.map(b=>b.id))+1;
+      saveBlocks(); updateNav(); showToast('Datos reiniciados');
+    }
+  }
+}
+function calcLead() {
+  const g = parseTime(document.getElementById('calc-g').value);
+  const s = parseTime(document.getElementById('calc-s').value);
+  if (g === null || s === null) { document.getElementById('calc-res').textContent = 'Formato: 3:26 AM'; return; }
+  const diff = s - g;
+  document.getElementById('calc-res').textContent = diff >= 0 ? `→ Lead: ${diff} min` : `→ Ya empezó hace ${Math.abs(diff)} min`;
+}
+
+// --- WH ---
+function renderWH() {
+  const whs = [...new Set(blocks.map(b=>b.warehouse))].sort();
+  const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  const colors = ['var(--accent)','var(--teal)','var(--orange)','var(--purple)','var(--blue)','var(--green)','var(--red)'];
+  document.getElementById('wh-cards').innerHTML = whs.map((wh,i) => {
+    const wb = blocks.filter(b=>b.warehouse===wh&&b.franja!=='OUTLIER');
+    if (!wb.length) return '';
+    const pays = wb.map(b=>b.pago);
+    const hrs2 = wb.filter(b=>b.duracion).map(b=>b.pago/b.duracion);
+    const leads2 = wb.filter(b=>b.lead!=null).map(b=>b.lead);
+    const franjas2 = {};
+    wb.forEach(b=>franjas2[b.franja]=(franjas2[b.franja]||0)+1);
+    const topF = Object.entries(franjas2).sort((a,b)=>b[1]-a[1])[0];
+    const diasActivos = [...new Set(wb.map(b=>b.dia))].filter(d=>dias.includes(d)).sort((a,b)=>dias.indexOf(a)-dias.indexOf(b));
+    const color = colors[i % colors.length];
+    return `<div class="card" style="margin-bottom:10px;border-color:${color}22">
+      <div class="wh-header">
+        <span class="wh-name" style="color:${color}">${wh}</span>
+        <span class="wh-count">${wb.length} bloques</span>
+      </div>
+      <div class="wh-stat-grid">
+        <div class="wh-stat"><div class="wh-stat-label">Pago prom</div><div class="wh-stat-val">$${Math.round(pays.reduce((a,b)=>a+b,0)/pays.length)}</div></div>
+        <div class="wh-stat"><div class="wh-stat-label">$/hr prom</div><div class="wh-stat-val">$${hrs2.length?(hrs2.reduce((a,b)=>a+b,0)/hrs2.length).toFixed(2):'—'}</div></div>
+        <div class="wh-stat"><div class="wh-stat-label">Lead prom</div><div class="wh-stat-val">${leads2.length?Math.round(leads2.reduce((a,b)=>a+b,0)/leads2.length)+'m':'—'}</div></div>
+        <div class="wh-stat"><div class="wh-stat-label">Mejor pago</div><div class="wh-stat-val">$${Math.max(...pays)}</div></div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+        ${topF ? franjaPill(topF[0]) : ''}
+        ${diasActivos.slice(0,4).map(d=>`<span class="pill pill-wh" style="font-size:10px">${d.slice(0,3)}</span>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// --- HEATMAP ---
+function renderHeatmap() {
+  const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  const windows = [
+    [180,210,'3:00a'],[210,240,'3:30a'],[240,270,'4:00a'],[270,300,'4:30a'],
+    [330,390,'5:30a'],[390,420,'6:30a'],[420,480,'7:00a'],[480,540,'8:00a'],
+    [570,630,'9:30a'],[600,660,'10:00a'],[660,720,'11:00a'],
+    [780,840,'1:00p'],[840,900,'2:00p'],[900,960,'3:00p'],
+    [960,1020,'4:00p'],[1020,1080,'5:00p'],[1080,1140,'6:00p'],
+    [1140,1200,'7:00p'],[1200,1260,'8:00p']
+  ];
+  function getWin(t) { for(const[s,e,n]of windows) if(t>=s&&t<e)return n; return null; }
+  const counts = {};
+  dias.forEach(d=>{ counts[d]={}; windows.forEach(([,,n])=>counts[d][n]=0); });
+  blocks.filter(b=>b.franja!=='OUTLIER').forEach(b=>{
+    const t = parseTime(b.blockStart);
+    if(t===null)return;
+    const w = getWin(t);
+    if(w && counts[b.dia]) counts[b.dia][w]=(counts[b.dia][w]||0)+1;
+  });
+  function cls(v){return v===0?'hm0':v===1?'hm1':v===2?'hm2':v===3?'hm3':'hm4';}
+  const wlabels = windows.map(w=>w[2]);
+  let html = `<table class="hm-table"><thead><tr><th>Día</th>${wlabels.map(w=>`<th>${w}</th>`).join('')}</tr></thead><tbody>`;
+  dias.forEach(d=>{
+    html+=`<tr><td class="hm-day">${d.slice(0,3)}</td>${wlabels.map(w=>{const v=counts[d][w]||0;return`<td class="${cls(v)}">${v||''}</td>`;}).join('')}</tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('heatmap').innerHTML = html;
+
+  const insightData = [
+    ['Viernes','Madrugada VTL2 ($191.50 + $138) + VGA1 $122.50 a las 4:16 AM. Mañana muy activa. Día más premium registrado.'],
+    ['Lunes','VTL2 $160/5hrs a las 10 AM. VGA1 tarde 5:30–7:15 PM muy concurrido. 8 bloques totales.'],
+    ['Jueves','VTL2 $180 mañana (4 min lead!) + $195 tarde (8 min). Día premium VTL2.'],
+    ['Miércoles','DGT2 mañana 6:35 AM. Tarde 5–7 PM activa múltiples WH.'],
+    ['Sábado','VTL2 madrugada $162. VGA1 tarde 7:15 PM constante.'],
+    ['Domingo','VGA1 madrugada $136–154 con lead largo. VTL2 $215 con solo 8 min!'],
+    ['Martes','VGA1 tarde 5:45–7:15 PM. DGT2 activo. Día tranquilo.'],
+  ];
+  document.getElementById('insights').innerHTML = insightData.map(([d,t])=>`
+    <div class="insight"><div class="insight-day">${d}</div><div class="insight-text">${t}</div></div>`).join('');
+}
+
+// --- INIT ---
+updateNav();
+renderHome();
+</script>
+</body>
+</html>
