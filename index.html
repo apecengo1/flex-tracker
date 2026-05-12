@@ -238,10 +238,12 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
           <option>Lunes</option><option>Martes</option><option>Miércoles</option>
           <option>Jueves</option><option>Viernes</option><option>Sábado</option><option>Domingo</option>
         </select>
+        <span style="font-size:10px;color:var(--muted);margin-top:2px">Auto desde fecha</span>
       </div>
       <div class="form-group">
-        <label>Fecha (ej: May 8)</label>
-        <input type="text" id="in-fecha" placeholder="May 9">
+        <label>Fecha</label>
+        <input type="date" id="in-fecha-date" oninput="onFechaChange()" style="height:40px;padding:0 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:var(--sans);font-size:13px;outline:none;-webkit-appearance:none;appearance:none;color-scheme:dark">
+        <input type="hidden" id="in-fecha">
       </div>
       <div class="form-group">
         <label>Grabbed At</label>
@@ -721,7 +723,25 @@ function autoCalcForm() {
     document.getElementById('in-lead').style.color = lead < 0 ? 'var(--red)' : 'var(--accent)';
   }
 }
-function updateRep() {
+function onFechaChange() {
+  const val = document.getElementById('in-fecha-date').value; // yyyy-mm-dd
+  if (!val) return;
+  const d = new Date(val + 'T12:00:00'); // noon to avoid timezone issues
+  const meses = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const fechaStr = `${meses[d.getMonth()]} ${d.getDate()}`;
+  const diaStr = dias[d.getDay()];
+  document.getElementById('in-fecha').value = fechaStr;
+  document.getElementById('in-dia').value = diaStr;
+}
+function setTodayDate() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  document.getElementById('in-fecha-date').value = `${yyyy}-${mm}-${dd}`;
+  onFechaChange();
+}
   const v = parseInt(document.getElementById('in-rep').value);
   document.getElementById('rep-display').textContent = `×${v}`;
   document.getElementById('rep-hint').textContent = v === 1 ? 'Se creará 1 registro.' : `Se crearán ${v} registros idénticos.`;
@@ -758,13 +778,14 @@ function addBlock() {
   });
 }
 function clearForm() {
-  ['in-fecha','in-grabbed','in-start','in-dur','in-pago','in-lead'].forEach(id => document.getElementById(id).value = '');
+  ['in-grabbed','in-start','in-dur','in-pago','in-lead'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('in-franja').value = '';
   document.getElementById('in-franja-display').textContent = '—';
   document.getElementById('in-franja-display').style.color = 'var(--muted)';
   document.getElementById('in-lead').style.color = 'var(--accent)';
   document.getElementById('in-rep').value = 1;
   document.getElementById('in-nextday').checked = false;
+  setTodayDate();
   updateRep();
 }
 function deleteBlock(id) {
@@ -919,9 +940,11 @@ window.updateRep = updateRep;
 window.changeRep = changeRep;
 window.autoCalcForm = autoCalcForm;
 window.renderBlocks = renderBlocks;
+window.onFechaChange = onFechaChange;
 
 // --- INIT ---
 updateNav();
+setTodayDate();
 
 document.addEventListener('firebase-ready', () => {
   document.getElementById('nav-sub').textContent = 'Conectando...';
