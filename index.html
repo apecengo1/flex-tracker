@@ -251,6 +251,10 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
         <label>Block Start</label>
         <input type="text" id="in-start" placeholder="4:00 AM" oninput="autoCalcForm()">
       </div>
+      <div class="form-group full" style="flex-direction:row;align-items:center;gap:10px;margin-top:-4px">
+        <input type="checkbox" id="in-nextday" onchange="autoCalcForm()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+        <label for="in-nextday" style="font-size:12px;color:var(--muted);cursor:pointer;text-transform:none;letter-spacing:0">El bloque es del día siguiente (ej: grabbed lunes 11PM → bloque martes 4AM)</label>
+      </div>
       <div class="form-group">
         <label>Duración (hrs)</label>
         <input type="number" id="in-dur" placeholder="4.5" step="0.5" min="1" max="8" inputmode="decimal">
@@ -442,6 +446,50 @@ const SEED = [
   [49,"VGA1","Viernes","May 8 6:24 AM","6:45 AM",4,120,21,"Mañana","Screenshot"],
   [50,"VTL2","Viernes","May 8 7:45 AM","8:00 AM",4.5,162,15,"Mañana","Screenshot"],
   [51,"VTL2","Viernes","May 8 10:31 AM","11:00 AM",5,180,29,"Mañana","Screenshot"],
+  [52,"VGA1","Viernes","May 8 2:43 pm","3:15 pm",3,90,32,"Tarde","Screenshot"],
+  [53,"VGA1","Viernes","May 8 2:43 pm","3:15 pm",3,90,32,"Tarde","Screenshot"],
+  [54,"VGA1","Viernes","May 8 2:43 pm","3:15 pm",3,90,32,"Tarde","Screenshot"],
+  [55,"VGA1","Viernes","May 8 2:43 pm","3:15 pm",3,90,32,"Tarde","Screenshot"],
+  [56,"VGA1","Viernes","May 8 2:43 pm","3:15 pm",3,90,32,"Tarde","Screenshot"],
+  [57,"VGA1","Viernes","May 8 2:43 pm","3:15 pm",3,90,32,"Tarde","Screenshot"],
+  [59,"DTG5","Viernes","May 8 2:59 pm","4:30 pm",4,120,91,"Tarde","Screenshot"],
+  [60,"DTG5","Viernes","May 8 2:59 pm","4:30 pm",4.5,135,91,"Tarde","Screenshot"],
+  [61,"VTL2","Viernes","May 8 4:28 pm","5:15 pm",4.5,180,47,"Tarde","Screenshot"],
+  [62,"VTL2","Viernes","May 8 4:28 pm","5:15 pm",4.5,180,47,"Tarde","Screenshot"],
+  [63,"VTL2","Viernes","May 8 4:28 pm","5:15 pm",4.5,180,47,"Tarde","Screenshot"],
+  [64,"DGE9","Viernes","May 8 4:16 pm","5:15 pm",4,114,59,"Tarde","ROUTES MSG"],
+  [65,"VTL2","Sábado","May 9 3:44 am","4:15 am",4,100,31,"Madrugada","Screenshot"],
+  [66,"VTL2","Sábado","May 9 3:44 am","4:30 am",4,136,46,"Madrugada","Screenshot"],
+  [67,"VTL2","Sábado","May 9 3:44 am","4:30 am",4,136,46,"Madrugada","Screenshot"],
+  [68,"DTG5","Sábado","May 9 3:48 pm","4:30 pm",4.5,135,42,"Tarde","ROUTES MSG"],
+  [69,"DTG5","Sábado","May 9 3:58 pm","5:00 pm",3,90,62,"Tarde","ROUTES MSG"],
+  [70,"DTG5","Sábado","May 9 3:58 pm","5:00 pm",3,90,62,"Tarde","ROUTES MSG"],
+  [71,"DTG5","Sábado","May 9 3:58 pm","5:00 pm",3,90,62,"Tarde","ROUTES MSG"],
+  [72,"DTG5","Sábado","May 9 4:13 pm","5:00 pm",3,90,47,"Tarde","ROUTES MSG"],
+  [73,"DGE9","Domingo","May 10 5:13 am","6:30 AM",3.5,143.5,77,"Mañana","Screenshot"],
+  [74,"VGA1","Domingo","May 10 5:22 am","6:30 am",4.5,164.5,68,"Mañana","Screenshot"],
+  [75,"VGA1","Domingo","may 10 9:03 am","5:45 pm",3,97.5,522,"Tarde","routes4u"],
+  [76,"DTG5","Domingo","may 10 1:22 pm","3:30 pm",4,136,128,"Tarde","routes4u"],
+  [77,"VGA1","Domingo","may 10 3:52 pm","6:00 pm",4,138,128,"Tarde","Screenshot"],
+  [78,"VTL2","Domingo","may 10 4:17 pm","5:30 pm",4.5,162,73,"Tarde","Screenshot"],
+  [79,"VGA1","Domingo","may 10 5:25 pm","7:00 pm",3,102,95,"Tarde","Screenshot"],
+  [80,"VGA1","Domingo","may 10 5:25 pm","6:45 pm",3,111,80,"Tarde","Screenshot"],
+  [81,"DGT8","Domingo","may 11 2:39 am","3:30 am",3.5,117,51,"Madrugada","routes4u"],
+  [82,"VTL2","Lunes","May 11 3:20 am","4:15 am",4,176,55,"Madrugada","routes4u"],
+  [83,"VGA1","Lunes","may 11 3:10 am","4:00 am",4,132,50,"Madrugada","routes4u"],
+  [84,"VGA1","Lunes","may 11 3:22 am","3:45 am",4,122,23,"Madrugada","Screenshot"],
+  [85,"VGA1","Lunes","may 11 3:22 am","3:45 am",4,122,23,"Madrugada","Screenshot"],
+  [86,"VTL2","Lunes","may 11 3:20 am","4:15 am",4,176,55,"Madrugada","Screenshot"],
+  [87,"DTG5","Lunes","may 11 5:50 am","6:30 am",3.5,101.5,40,"Mañana","Screenshot"],
+  [88,"VGA1","Lunes","may 11 6:27 am","6:30 am",4.5,130.5,3,"Mañana","Screenshot"],
+  [89,"VTL2","Lunes","may 11 1:53 pm","2:00 pm",4.5,162,7,"Tarde","routes4u"],
+  [90,"DGE9","Lunes","may 11 2:45 pm","5:15 pm",4,114,150,"Tarde","routes4u"],
+  [91,"DGE9","Lunes","may 11 1:47 pm","5:15 pm",4,114,208,"Tarde","routes4u"],
+  [92,"DTG5","Lunes","may 11 4:28 pm","5:45 pm",3,90,77,"Tarde","routes4u"],
+  [93,"DTG5","Lunes","may 11 4:28 pm","5:45 pm",3,90,77,"Tarde","routes4u"],
+  [94,"DTG5","Lunes","may 11 4:28 pm","5:45 pm",3,90,77,"Tarde","routes4u"],
+  [95,"DTG5","Lunes","may 11 4:28 pm","5:45 pm",3,90,77,"Tarde","routes4u"],
+  [96,"DTG5","Lunes","may 11 4:28 pm","5:45 pm",3,90,77,"Tarde","routes4u"]
 ];
 
 // --- GLOBAL STATE (must be first) ---
@@ -646,14 +694,15 @@ function renderBlocks() {
 // --- ADD ---
 function franjaFromMinutes(mins) {
   if (mins === null) return '';
-  if (mins >= 0 && mins < 330) return 'Madrugada';   // 12:00am–5:29am
-  if (mins >= 330 && mins < 720) return 'Mañana';    // 5:30am–11:59am
-  if (mins >= 720 && mins < 1200) return 'Tarde';    // 12:00pm–7:59pm
-  return 'Noche';                                     // 8:00pm–11:59pm
+  if (mins >= 0 && mins < 330) return 'Madrugada';
+  if (mins >= 330 && mins < 720) return 'Mañana';
+  if (mins >= 720 && mins < 1200) return 'Tarde';
+  return 'Noche';
 }
 function autoCalcForm() {
   const startRaw = document.getElementById('in-start').value.trim();
   const grabbedRaw = document.getElementById('in-grabbed').value.trim();
+  const nextDay = document.getElementById('in-nextday').checked;
   const startMins = parseTime(startRaw);
   const grabbedMins = parseTime(grabbedRaw);
 
@@ -664,9 +713,10 @@ function autoCalcForm() {
   document.getElementById('in-franja-display').textContent = franja || '—';
   document.getElementById('in-franja-display').style.color = pill[franja] || 'var(--muted)';
 
-  // Auto lead from grabbed + start
+  // Auto lead — handle overnight (grabbed PM, block start AM next day)
   if (grabbedMins !== null && startMins !== null) {
-    const lead = startMins - grabbedMins;
+    let lead = startMins - grabbedMins;
+    if (nextDay || lead < -60) lead += 1440; // add 24hrs if next day checked or clearly overnight
     document.getElementById('in-lead').value = lead;
     document.getElementById('in-lead').style.color = lead < 0 ? 'var(--red)' : 'var(--accent)';
   }
@@ -714,6 +764,7 @@ function clearForm() {
   document.getElementById('in-franja-display').style.color = 'var(--muted)';
   document.getElementById('in-lead').style.color = 'var(--accent)';
   document.getElementById('in-rep').value = 1;
+  document.getElementById('in-nextday').checked = false;
   updateRep();
 }
 function deleteBlock(id) {
