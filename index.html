@@ -436,7 +436,7 @@ const SEED = [
   [37,"DGT2","Martes","May 5 5:00 PM","5:45 PM",3,85.5,45,"Tarde","routes4u"],
   [38,"DGT2","Miércoles","May 6 5:13 PM","5:30 PM",3,90,17,"Tarde","routes4u"],
   [39,"DGT2","Miércoles","May 6 6:35 AM","6:45 AM",3.5,101.5,10,"Mañana","ROUTES MSG"],
-  [40,"DGT8","—","Desconocida","6:30 PM",3,90,null,"Tarde","Screenshot"],
+  [40,"DGT8","Desconocido","Desconocida","6:30 PM",3,90,null,"Tarde","Screenshot"],
   [41,"VTL2","Lunes","May 5 10:12 AM","10:45 AM",5,160,33,"Mañana","Grupo"],
   [42,"VTL2","Lunes","May 5 10:02 AM","10:45 AM",5,160,43,"Mañana","Grupo"],
   [43,"VGA1","Lunes","May 5 6:47 PM","7:15 PM",3.5,105,28,"Tarde","Grupo"],
@@ -742,6 +742,7 @@ function setTodayDate() {
   document.getElementById('in-fecha-date').value = `${yyyy}-${mm}-${dd}`;
   onFechaChange();
 }
+function updateRep() {
   const v = parseInt(document.getElementById('in-rep').value);
   document.getElementById('rep-display').textContent = `×${v}`;
   document.getElementById('rep-hint').textContent = v === 1 ? 'Se creará 1 registro.' : `Se crearán ${v} registros idénticos.`;
