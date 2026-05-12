@@ -253,9 +253,14 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
         <label>Block Start</label>
         <input type="text" id="in-start" placeholder="4:00 AM" oninput="autoCalcForm()">
       </div>
-      <div class="form-group full" style="flex-direction:row;align-items:center;gap:10px;margin-top:-4px">
-        <input type="checkbox" id="in-nextday" onchange="autoCalcForm()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
-        <label for="in-nextday" style="font-size:12px;color:var(--muted);cursor:pointer;text-transform:none;letter-spacing:0">El bloque es del día siguiente (ej: grabbed lunes 11PM → bloque martes 4AM)</label>
+      <div class="form-group full" style="margin-top:-4px">
+        <input type="checkbox" id="in-nextday" onchange="autoCalcForm();updateNextdayToggle()" style="display:none">
+        <div onclick="document.getElementById('in-nextday').checked=!document.getElementById('in-nextday').checked;autoCalcForm();updateNextdayToggle()" id="nextday-toggle" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg3);cursor:pointer;transition:all .15s;user-select:none">
+          <div id="nextday-indicator" style="width:36px;height:20px;border-radius:20px;background:var(--muted2);transition:all .2s;position:relative;flex-shrink:0">
+            <div id="nextday-knob" style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:all .2s"></div>
+          </div>
+          <span id="nextday-label" style="font-size:12px;color:var(--muted);transition:color .15s">Bloque del día siguiente <span style="font-size:11px;opacity:.7">(grabbed noche → bloque madrugada)</span></span>
+        </div>
       </div>
       <div class="form-group">
         <label>Duración (hrs)</label>
@@ -723,6 +728,13 @@ function autoCalcForm() {
     document.getElementById('in-lead').style.color = lead < 0 ? 'var(--red)' : 'var(--accent)';
   }
 }
+function updateNextdayToggle() {
+  const checked = document.getElementById('in-nextday').checked;
+  document.getElementById('nextday-indicator').style.background = checked ? 'var(--accent)' : 'var(--muted2)';
+  document.getElementById('nextday-knob').style.left = checked ? '18px' : '2px';
+  document.getElementById('nextday-label').style.color = checked ? 'var(--accent)' : 'var(--muted)';
+  document.getElementById('nextday-toggle').style.borderColor = checked ? 'var(--accent)' : 'var(--border2)';
+}
 function onFechaChange() {
   const val = document.getElementById('in-fecha-date').value; // yyyy-mm-dd
   if (!val) return;
@@ -786,6 +798,7 @@ function clearForm() {
   document.getElementById('in-lead').style.color = 'var(--accent)';
   document.getElementById('in-rep').value = 1;
   document.getElementById('in-nextday').checked = false;
+  updateNextdayToggle();
   setTodayDate();
   updateRep();
 }
@@ -942,6 +955,7 @@ window.changeRep = changeRep;
 window.autoCalcForm = autoCalcForm;
 window.renderBlocks = renderBlocks;
 window.onFechaChange = onFechaChange;
+window.updateNextdayToggle = updateNextdayToggle;
 
 // --- INIT ---
 updateNav();
